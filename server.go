@@ -27,7 +27,7 @@ func (p *PlayerServer) processWin(w http.ResponseWriter, player string) {
 
 	playerScore := p.store.GetPlayerScore(player)
 
-	playerScore += 1
+	playerScore++
 	p.store.SavePlayerScore(player, playerScore)
 }
 
@@ -47,6 +47,7 @@ func (p *PlayerServer) getPlayerName(r *http.Request) string {
 	player := strings.TrimPrefix(r.URL.Path, "/players/")
 	return player
 }
+
 type PlayerStore interface {
 	GetPlayerScore(name string) int
 	SavePlayerScore(name string, score int)

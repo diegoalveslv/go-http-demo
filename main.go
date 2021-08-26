@@ -6,15 +6,20 @@ import (
 )
 
 //main.go
-type InMemoryPlayerStore struct{}
-
-func (i *InMemoryPlayerStore) GetPlayerScore(name string) int {
-    return 123
+type InMemoryPlayerStore struct {
+	scores map[string]int
 }
 
-func (i *InMemoryPlayerStore) SavePlayerScore(name string, score int) {}
+func (i *InMemoryPlayerStore) GetPlayerScore(name string) int {
+	return i.scores[name]
+}
+
+func (i *InMemoryPlayerStore) SavePlayerScore(name string, score int) {
+	i.scores[name] = score
+}
 
 func main() {
-    server := &PlayerServer{&InMemoryPlayerStore{}}
-    log.Fatal(http.ListenAndServe(":5000", server))
+	scores := make(map[string]int)
+	server := &PlayerServer{&InMemoryPlayerStore{scores}}
+	log.Fatal(http.ListenAndServe(":5000", server))
 }
