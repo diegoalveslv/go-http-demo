@@ -16,15 +16,19 @@ func (s *StubPlayerStore) GetPlayerScore(name string) int {
 	return score
 }
 
+func (s *StubPlayerStore) SavePlayerScore(name string, score int) {
+	s.scores[name] = score
+}
+
 func TestGETPlayers(t *testing.T) {
 	store := StubPlayerStore{
 		map[string]int{
 			"Pepper": 20,
-			"Floyd": 10,
+			"Floyd":  10,
 		},
 	}
 	server := &PlayerServer{&store}
-	
+
 	t.Run("returns Pepper's score", func(t *testing.T) {
 		request := newGetScoreRequest("Pepper")
 		response := httptest.NewRecorder()
@@ -60,13 +64,29 @@ func TestGETPlayers(t *testing.T) {
 	})
 }
 
+type SpyPlayerStore struct {
+	scores map[string]int
+	nameStored  string
+	scoreStored int
+}
+
+func (s *SpyPlayerStore) GetPlayerScore(name string) int {
+	return s.scores[name]
+}
+
+func (s *SpyPlayerStore) SavePlayerScore(name string, score int) {
+	s.nameStored = name
+	s.scoreStored = score
+}
+
 func TestStoreWins(t *testing.T) {
-	store := StubPlayerStore {
-		map[string]int{},
-	}
-	server := &PlayerServer{&store}
 
 	t.Run("it returns accepted on POST", func(t *testing.T) {
+		store := StubPlayerStore{
+			map[string]int{},
+		}
+		server := &PlayerServer{&store}
+
 		request, _ := http.NewRequest(http.MethodPost, "/players/Pepper", nil)
 		response := httptest.NewRecorder()
 
@@ -75,6 +95,34 @@ func TestStoreWins(t *testing.T) {
 		assertStatus(t, response.Code, http.StatusAccepted)
 	})
 
+	t.Run("it records wins when POST", func(t *testing.T) {
+		request, _ := http.NewRequest(http.MethodPost, "/players/Pepper", nil)
+		response := httptest.NewRecorder()
+
+		storeSpy := SpyPlayerStore{
+			scores: map[string]int{
+				"Pepper": 20,
+			},
+		}
+		server := &PlayerServer{&storeSpy}
+
+		server.ServeHTTP(response, request)
+
+		assertStatus(t, response.Code, http.StatusAccepted)
+		assertWasStored(t, storeSpy, "Pepper", 21)
+	})
+}
+
+func assertWasStored(t *testing.T, spy SpyPlayerStore, name string, score int) {
+	t.Helper()
+
+	if spy.nameStored != name {
+		t.Errorf("incorrect name stored. Got %q want %q", spy.nameStored, name)
+	}
+
+	if spy.scoreStored != score {
+		t.Errorf("incorrect score stored. Got %d want %d", spy.scoreStored, score)
+	}
 }
 
 func newGetScoreRequest(name string) *http.Request {
