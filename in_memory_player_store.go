@@ -16,3 +16,7 @@ func (i *InMemoryPlayerStore) GetPlayerScore(name string) int {
 func (i *InMemoryPlayerStore) SavePlayerScore(name string, score int) {
 	i.scores[name] = score
 }
+
+func (i *InMemoryPlayerStore) GetLeague() []Player {
+	return nil
+}
